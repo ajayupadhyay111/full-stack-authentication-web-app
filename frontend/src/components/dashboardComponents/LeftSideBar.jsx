@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from "react";
 import {
-  LayoutDashboard,
   Users,
-  Settings,
-  LogOut,
-  MailOpen,
+  Mail,
 } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
-import { Dialog, DialogTrigger } from "@radix-ui/react-dialog";
+import { Link } from "react-router-dom";
 
 const LeftSideBar = ({active}) => {
   return (
@@ -30,8 +26,8 @@ const LeftSideBar = ({active}) => {
             }`}
           >
             <Link to="/dashboard/mails" className="flex items-center space-x-2">
-              <MailOpen size={20} />
-              <span className={`hidden lg:block`}>Users</span>
+              <Mail size={20} />
+              <span className={`hidden lg:block`}>Mail</span>
             </Link>
           </li>
         </ul>

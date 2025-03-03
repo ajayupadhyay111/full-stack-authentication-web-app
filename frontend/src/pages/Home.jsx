@@ -7,26 +7,27 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
 const Home = () => {
-  const {user,setUser} = useContext(AuthContext);
+  const { user, setUser, accessToken, setAccessToken } =
+    useContext(AuthContext);
   const navigate = useNavigate();
-  let accessToken = localStorage.getItem("accessToken");
-  useEffect(()=>{
-    (async()=>{
+  useEffect(() => {
+    (async () => {
       try {
-        const response = await API.get("/getUserProfile",{
-          headers:{
-            Authorization:`Bearer ${accessToken}`
-          }
-        })
-        setUser(response.data.user)
+        const response = await API.get("/getUserProfile", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        setUser(response.data.user);
       } catch (error) {
-        setUser(null)
-        if(error?.response?.status === 403 || error.response.status === 400){
-          navigate("/login")
+        setUser(null);
+        console.log(error);
+        if (error?.response?.status === 403 || error.response.status === 400) {
+          navigate("/login");
         }
       }
-    })()
-  },[])
+    })();
+  }, [setAccessToken]);
   return (
     <div className="relative min-h-screen bg-gray-50">
       {/* Navbar */}

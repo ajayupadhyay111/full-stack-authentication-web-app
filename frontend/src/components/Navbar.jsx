@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -25,7 +23,7 @@ import {
 import { MdDashboard } from "react-icons/md";
 
 const Navbar = () => {
-  const { user } = useContext(AuthContext);
+  const { user,accessToken,setAccessToken,setUser } = useContext(AuthContext);
   const [name, setName] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openLogoutDialog, setOpenLogoutDialog] = useState(false);
@@ -35,8 +33,11 @@ const Navbar = () => {
   const sendOtpToRegisterEmail = async () => {
     try {
       setIsVerifying(true);
-      const response = await API.post("/sendOTP", {});
-      console.log(response);
+      const response = await API.post("/sendOTP", {},{
+        headers:{
+          Authorization:`Bearer ${accessToken}`
+        }
+      });
       toast.success(response.data.message);
       navigate(`/verify-email/${response.data.emailVerificationToken}`);
     } catch (error) {
@@ -47,23 +48,34 @@ const Navbar = () => {
   };
 
   const handleLogoutAccount = async () => {
-    let tokenRefresh = localStorage.getItem("refreshToken");
     try {
       setIsLoading("logout");
-      const response = await API.post("/logout", {
-        refreshToken: tokenRefresh,
+      const response = await API.post("/logout", {},{
+        headers:{
+          Authorization:`Bearer ${accessToken}`
+        }
       });
       toast.success(response.data.message);
+      setUser(null);
+      setAccessToken(null)
       navigate("/login");
     } catch (error) {
       toast.error(error.response?.data.message || error.message);
+    }finally{
+      setIsLoading("")
     }
   };
   const handleDeleteAccount = async () => {
     try {
       setIsLoading("delete");
-      const response = await API.delete("/deleteAccount");
+      const response = await API.delete("/deleteAccount",{
+        headers:{
+          Authorization:`Bearer ${accessToken}`
+        }
+      });
       toast.success(response.data.message);
+      setUser(null)
+      setAccessToken(null)
       navigate("/register");
     } catch (error) {
       toast.error(error.response?.data.message || error.message);
@@ -77,7 +89,7 @@ const Navbar = () => {
         <DropdownMenuTrigger asChild>
           <Avatar className="flex justify-center items-center border-2">
             <span className="text-lg font-semibold text-gray-800">
-              {user?.name?.at(0)}
+              {user?.name?.at(0).toUpperCase()}
             </span>
           </Avatar>
         </DropdownMenuTrigger>

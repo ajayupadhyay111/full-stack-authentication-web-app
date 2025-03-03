@@ -1,12 +1,17 @@
 import { useContext, useState } from "react";
 import user from "../assets/user.png";
-import { FaEyeSlash, FaEye, FaLock, FaUserAlt } from "react-icons/fa";
+import { FaEyeSlash, FaEye, FaLock, FaUserAlt, FaGoogle } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { login } from "@/api/api";
+import { googleAuth, login } from "@/api/api";
 import { AuthContext } from "@/context/authContext.js";
+import GoogleIcon from "../assets/google.svg";
+import FacebookIcon from "../assets/facebook.svg";
+import LinkedInIcon from "../assets/linkedin.svg";
+import { useGoogleLogin } from "@react-oauth/google";
+
 const Login = () => {
   const [focusField, setFocusField] = useState(null);
   const [passwordHidden, setPasswordHidden] = useState(true);
@@ -18,14 +23,13 @@ const Login = () => {
     formState: { errors },
   } = useForm();
   const navigate = useNavigate();
-  const { setUser } = useContext(AuthContext);
+  const { setUser, setAccessToken } = useContext(AuthContext);
   const onSubmit = async (data) => {
     try {
       setIsLoading(true);
       const response = await login(data);
-      localStorage.setItem("accessToken", response.data.accessToken);
-      localStorage.setItem("refreshToken", response.data.refreshToken);
       setUser(response.data.user);
+      setAccessToken(response.data.accessToken);
       toast.success(response?.data.message);
       navigate("/");
     } catch (error) {
@@ -34,6 +38,24 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
+  // google login functionality is written below
+  const responseGoogle = async (authResult) => {
+    try {
+      const response = await googleAuth(authResult.code);
+      setUser(response.data.user);
+      setAccessToken(response.data.accessToken);
+      navigate("/");
+    } catch (error) {
+      console.log("error while requesting google code ", error);
+    }
+  };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: responseGoogle,
+    onError: responseGoogle,
+    flow: "auth-code",
+  });
   return (
     <div
       className="w-screen h-screen flex justify-center items-center"
@@ -41,8 +63,8 @@ const Login = () => {
         setFocusField(null);
       }}
     >
-      <div className="w-[500px] shadow-2xl h-[450px] flex justify-center flex-col items-center">
-        <img src={user} alt="user" className="w-24 h-24" />
+      <div className="w-[500px] shadow-2xl h-[470px] flex justify-center flex-col items-center">
+        <img src={user} alt="user" className="w-24 h-24 mt-5" />
         <h1 className="font-semibold uppercase text-4xl">Welcome</h1>
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -142,6 +164,23 @@ const Login = () => {
             </Link>
           </p>
         </form>
+        <div className="relative w-1/2 mt-5">
+          <hr />
+          <span className="absolute -top-[10px] left-[46%] text-gray-500 bg-white text-sm">
+            OR
+          </span>
+        </div>
+        <div className="flex gap-9 my-5">
+          <span>
+            <img src={FacebookIcon} alt="" />
+          </span>
+          <span  onClick={googleLogin}>
+            <img src={GoogleIcon} alt="" />
+          </span>
+          <span>
+            <img src={LinkedInIcon} alt="" />
+          </span>
+        </div>
       </div>
     </div>
   );

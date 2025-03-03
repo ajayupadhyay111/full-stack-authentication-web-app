@@ -13,6 +13,7 @@ import {
   getAllUsers,
 } from "../controllers/user.controllers.js";
 import { authenticateToken } from "../middlewares/authenticateToken.js";
+import { googleLogin } from "../controllers/googleLoginController.js";
 const router = express.Router();
 
 router.route("/register").post(registerController);
@@ -26,4 +27,9 @@ router.route("/refreshToken").get(refreshToken);
 router.route("/getUserProfile").get(authenticateToken, profileController);
 router.route("/sendOTP").post(authenticateToken, sendOTP);
 router.route("/getAllUsers").get(authenticateToken,getAllUsers)
+
+
+// social login routes
+router.get("/google",googleLogin)
 export default router;
+  

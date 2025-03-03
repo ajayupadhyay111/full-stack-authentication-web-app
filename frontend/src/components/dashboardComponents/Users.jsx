@@ -1,5 +1,5 @@
 import { API } from "@/api/api";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Pencil, Trash } from "lucide-react";
 import {
@@ -21,25 +21,31 @@ import {
   SelectContent,
   SelectItem,
 } from "../ui/select";
-
-
+import { AuthContext } from "@/context/authContext";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteUser, setDeleteUser] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     role: "user",
     isVerified: "false",
   });
-  
+
+  const { accessToken } = useContext(AuthContext);
 
   useEffect(() => {
     (async () => {
       try {
         setIsLoading(true);
-        const response = await API.get("/getAllUsers");
+        const response = await API.get("/getAllUsers", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
         setUsers(response.data.users);
       } catch (error) {
         toast.error(error.response?.data.message || error.message);
@@ -56,17 +62,38 @@ const Users = () => {
   const handleEdit = async (e, USER) => {
     e.preventDefault();
     try {
-      const response = await API.put(`/admin/editUser/${USER._id}`, formData);
+      const response = await API.put(`/admin/editUser/${USER._id}`, formData, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
       if (response.data.success) {
-        setUsers(users.map((user) => (user._id === USER._id ? formData : user)))
+        setUsers(
+          users.map((user) => (user._id === USER._id ? formData : user))
+        );
       }
     } catch (error) {
       toast.error(error.response?.data.message || error.message);
     }
   };
 
-  const handleDelete = (id) => {
-    setUsers(users.filter((user) => user._id !== id));
+  const handleDelete = async (id) => {
+    try {
+     
+      const response = await API.delete(`/admin/deleteUser/${id}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (response.status === 200) {
+        setUsers(users.filter((user) => user._id !== id));
+        toast.success("User deleted");
+      }
+    } catch (error) {
+      toast.error(error.response?.data.message || error.message);
+    } finally {
+      setDeleteUser(false)
+    }
   };
   return (
     <>
@@ -193,15 +220,15 @@ const Users = () => {
 
                                 <DialogFooter>
                                   <DialogClose>
-                                  <Button type="submit">Submit</Button>
+                                    <Button type="submit">Submit</Button>
                                   </DialogClose>
                                 </DialogFooter>
                               </form>
                             </DialogContent>
                           </Dialog>
 
-                          <Dialog>
-                            <DialogTrigger asChild>
+                          <Dialog open={deleteUser} onOpenChange={setDeleteUser}>
+                            <DialogTrigger onClick={()=>setDeleteUser(true)}>
                               <Trash className="text-red-500" />
                             </DialogTrigger>
                             <DialogContent className="max-w-md">
@@ -212,16 +239,18 @@ const Users = () => {
                                 </DialogTitle>
                               </DialogHeader>
                               <div className="flex justify-end space-x-2">
-                                <DialogClose asChild>
+                                <DialogClose onClick={()=>setDeleteUser(false)}>
                                   <Button variant="outline">Cancel</Button>
                                 </DialogClose>
-                                <Button
+                             <Button
                                   variant="destructive"
-                                  onClick={() => handleDelete(user._id)}
+                                  onClick={() => {handleDelete(user._id);setDeleteUser(false)}}
                                 >
+
                                   Delete
                                 </Button>
-                              </div>
+                              
+                             </div>
                             </DialogContent>
                           </Dialog>
                         </div>

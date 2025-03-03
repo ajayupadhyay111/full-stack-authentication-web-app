@@ -48,7 +48,6 @@ export default function VerifyEmail() {
     let OTP = otp.join("");
     try {
       const response = await API.post(`/verify-email/${token}`,{OTP});
-      console.log(response)
       setUser(prev=>({...prev,isVerified:true}))
       navigate("/login")
       toast.success(response.data.message);

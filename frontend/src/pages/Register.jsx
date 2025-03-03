@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import user from "../assets/user.png";
 import { FaEyeSlash, FaEye, FaLock, FaUserAlt } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { registerUser } from "@/api/api";
-import toast from "react-hot-toast";
-import { Loader2 } from "lucide-react";
+import toast from "react-hot-toast";import { googleAuth, login } from "@/api/api";
+import { AuthContext } from "@/context/authContext.js";
+import GoogleIcon from "../assets/google.svg";
+import FacebookIcon from "../assets/facebook.svg";
+import LinkedInIcon from "../assets/linkedin.svg";
+import { useGoogleLogin } from "@react-oauth/google";
 const Register = () => {
   const [focusField, setFocusField] = useState(null);
   const [passwordHidden, setPasswordHidden] = useState(true);
@@ -16,6 +20,7 @@ const Register = () => {
     handleSubmit,
     formState: { errors },
   } = useForm();
+  const {setUser,setAccessToken} = useContext(AuthContext);
 
   const navigate = useNavigate();
   const onSubmit = async (data) => {
@@ -30,6 +35,26 @@ const Register = () => {
       setIsLoading(false);
     }
   };
+
+
+    // google login functionality is written below
+    const responseGoogle = async (authResult) => {
+      try {
+        const response = await googleAuth(authResult.code);
+        setUser(response.data.user);
+        setAccessToken(response.data.accessToken);
+        navigate("/");
+      } catch (error) {
+        console.log("error while requesting google code ", error);
+      }
+    };
+  
+    const googleLogin = useGoogleLogin({
+      onSuccess: responseGoogle,
+      onError: responseGoogle,
+      flow: "auth-code",
+    });
+  
   return (
     <div
       className="w-screen h-screen flex justify-center items-center"
@@ -37,7 +62,7 @@ const Register = () => {
         setFocusField(null);
       }}
     >
-      <div className="w-[500px] shadow-2xl h-[500px] flex justify-center flex-col items-center">
+      <div className="w-[500px] shadow-2xl h-[520px] flex justify-center flex-col items-center">
         <img src={user} alt="user" className="w-24 h-24" />
         <h1 className="font-semibold uppercase text-4xl">Welcome</h1>
         <form
@@ -158,6 +183,21 @@ const Register = () => {
             </Link>
           </p>
         </form>
+        <div className="relative w-1/2 mt-5">
+            <hr />
+            <span className="absolute -top-[10px] left-[46%] text-gray-500 bg-white text-sm">OR</span>
+          </div>
+           <div className="flex gap-9 my-5">
+                 <span>
+                   <img src={FacebookIcon} alt="" />
+                 </span>
+                 <span  onClick={googleLogin}>
+                   <img src={GoogleIcon} alt="" />
+                 </span>
+                 <span>
+                   <img src={LinkedInIcon} alt="" />
+                 </span>
+               </div>
       </div>
     </div>
   );

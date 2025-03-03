@@ -120,10 +120,16 @@ export const loginController = async (request, response, next) => {
     user.refreshToken = refreshToken;
     await user.save();
 
+    response.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     response.status(201).json({
       message: "LogIn successfull",
       accessToken: accessToken,
-      refreshToken: refreshToken,
       user: {
         name: user.name,
         isVerified: user.isVerified,
@@ -236,7 +242,7 @@ export const deleteAccount = async (req, res, next) => {
 
 export const logout = async (req, res, next) => {
   try {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
       return res.status(400).json({ message: "Refresh token is required!" });
     }
@@ -272,7 +278,7 @@ export const profileController = async (request, response, next) => {
     if (!user) {
       return response.status(400).json({ message: "User not found" });
     }
-    response.status(201).json({
+    return response.status(201).json({
       user: {
         name: user.name,
         email: user.email,
@@ -287,7 +293,7 @@ export const profileController = async (request, response, next) => {
 
 export const refreshToken = async (request, response, next) => {
   try {
-    const refreshToken = request.headers["authorization"]?.split(" ")[1];
+    const refreshToken = request.cookies.refreshToken;
     if (!refreshToken) {
       return response.status(401).json({ message: "Unauthorized" });
     }
@@ -309,7 +315,7 @@ export const refreshToken = async (request, response, next) => {
       { expiresIn: "15m" }
     );
 
-    response.status(201).json({ accessToken });
+    return response.status(201).json({ accessToken });
   } catch (error) {
     next(error);
   }
@@ -365,10 +371,10 @@ export const getAllUsers = async (request, response, next) => {
       return response.status(400).json({ message: "User not found" });
     }
     if (user.role === "admin") {
-      const users = await User.find({ _id: { $ne: user._id  } });
+      const users = await User.find({ _id: { $ne: user._id } });
       return response.status(201).json({ users });
     }
-    response.status(400).json({
+    return response.status(400).json({
       message: "You are not authorized to access this page",
       users: {
         name: user.name,

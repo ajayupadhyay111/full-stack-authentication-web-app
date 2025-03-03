@@ -1,25 +1,62 @@
+import { API } from "@/api/api";
 import { AuthContext } from "@/context/authContext";
 import { useContext } from "react";
 import { Navigate, Outlet, useNavigate } from "react-router-dom";
 
-const accessToken = localStorage.getItem("accessToken");
-const refreshToken = localStorage.getItem("refreshToken");
 export const PublicRoute = ({ children }) => {
+  const { accessToken,setAccessToken } = useContext(AuthContext);
+  if (!accessToken) {
+    let promise = new Promise((resolve, reject) => {
+      API.get("/refreshToken")
+        .then((refreshRes) => resolve(refreshRes.data)) // Resolve with data
+        .catch((error) => reject(error)); // Reject if an error occurs
+    });
+  
+    promise
+      .then((res) => setAccessToken( res.accessToken))
+      .catch((err) => console.log("Error:", err));
+  }
   return !accessToken ? children : <Navigate to={"/"} />;
 };
 
 export const RegisterRoute = ({ children }) => {
-  return !refreshToken ? children : <Navigate to={"/"} />;
+  const { accessToken,setAccessToken } = useContext(AuthContext);
+  if (!accessToken) {
+    let promise = new Promise((resolve, reject) => {
+      API.get("/refreshToken")
+        .then((refreshRes) => resolve(refreshRes.data)) // Resolve with data
+        .catch((error) => reject(error)); // Reject if an error occurs
+    });
+  
+    promise
+      .then((res) => setAccessToken( res.accessToken))
+      .catch((err) => console.log("Error:", err));
+  }
+  return !accessToken ? children : <Navigate to={"/"} />;
 };
 
+export const PrivateRoute = ({ children }) => {
+  const { accessToken, setAccessToken } = useContext(AuthContext);
+  if (!accessToken) {
+    let promise = new Promise((resolve, reject) => {
+      API.get("/refreshToken")
+        .then((refreshRes) => resolve(refreshRes.data)) // Resolve with data
+        .catch((error) => reject(error)); // Reject if an error occurs
+    });
+  
+    promise
+      .then((res) => setAccessToken( res.accessToken))
+      .catch((err) => console.log("Error:", err));
+  }
+  return children
+  
+};
 
 export const AdminRoute = ({ children }) => {
-  const { user } = useContext(AuthContext);
-  return user?.role === "admin" ? (
+  const { user, accessToken } = useContext(AuthContext);
+  return accessToken && user?.role === "admin" ? (
     <Outlet />
-  ) : accessToken && user?.role === "user" ? (
-    <Navigate to={"/"} />
   ) : (
-    <Navigate to={"/login"} />
+    <Navigate to={"/"} />
   );
 };
