@@ -3,7 +3,7 @@ import axios from "axios";
 import { useContext } from "react";
 
 export const API = axios.create({
-  baseURL: "http://localhost:4000/api",
+  baseURL: "https://full-stack-authentication-web-app.onrender.com/api",
   withCredentials: true,
 });
 
